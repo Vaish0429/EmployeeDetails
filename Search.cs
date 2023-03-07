@@ -10,11 +10,13 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Windows.Forms;
 using Newtonsoft.Json;
+using System.Configuration;
 
 namespace EmployeeDetails
 {
     public partial class Search : Form
     {
+        string apiToken = ConfigurationManager.AppSettings["ApiToken"];
         public Search()
         {
             InitializeComponent();
@@ -33,17 +35,14 @@ namespace EmployeeDetails
                 if (!String.IsNullOrEmpty(textBox1.Text))
                 {
 
-                    string id = textBox1.Text.Trim();
-
-                    //int Eid = Int32.Parse(id);
+                    string id = textBox1.Text.Trim();                   
                     HttpClient clint = new HttpClient();
                     string BaseUrl = "https://gorest.co.in/public/v2/";
                     string endpoint = "/users/";
                     string param1 = id;
                     string url = $"{BaseUrl}{endpoint}?id={param1}";
-                    
-                    HttpResponseMessage response = await clint.GetAsync(url);
-                   
+                    clint.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiToken);
+                    HttpResponseMessage response = await clint.GetAsync(url);                 
                    
                     string result = await response.Content.ReadAsStringAsync();
                     DataTable dataTable = JsonConvert.DeserializeObject<DataTable>(result);
@@ -116,7 +115,9 @@ namespace EmployeeDetails
             string BaseUrl = "https://gorest.co.in/public/v2/";
             string endpoint = "/users/";
             string url = $"{ BaseUrl}{ endpoint}";
+           
             HttpClient clint = new HttpClient();
+            clint.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiToken);
             HttpResponseMessage response = await clint.GetAsync(url);
 
 

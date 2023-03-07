@@ -147,7 +147,7 @@ namespace EmployeeDetails
                     
                     using (var client = new HttpClient())
                     {
-                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiToken.Substring(7));
+                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiToken);
                         var parameters = new FormUrlEncodedContent(new[]
                         {
                     //new KeyValuePair<string, string>("id", Eid),
@@ -229,7 +229,7 @@ namespace EmployeeDetails
                 if (!String.IsNullOrEmpty(textBox1.Text))
                 {
                     HttpClient client = new HttpClient();
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiToken.Substring(7));
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiToken);
                     
                     string param1 = textBox1.Text;
                    
