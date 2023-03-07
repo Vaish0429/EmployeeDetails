@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
 using System.Linq;
@@ -18,6 +19,7 @@ namespace EmployeeDetails
 {
     public partial class Employee : Form
     {
+        string apiToken = ConfigurationManager.AppSettings["ApiToken"];
         public Employee()
         {
             InitializeComponent();
@@ -128,8 +130,10 @@ namespace EmployeeDetails
        
         public async Task AddAsync()
         {
-            //InputValidation();
+          
+            string apiurl1 = "https://gorest.co.in/public/v2/users/?id";
             try
+
             {
                 if (InputValidation())
                 {
@@ -143,7 +147,7 @@ namespace EmployeeDetails
                     
                     using (var client = new HttpClient())
                     {
-                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "fa114107311259f5f33e70a5d85de34a2499b4401da069af0b1d835cd5ec0d56");
+                        client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiToken.Substring(7));
                         var parameters = new FormUrlEncodedContent(new[]
                         {
                     //new KeyValuePair<string, string>("id", Eid),
@@ -154,14 +158,16 @@ namespace EmployeeDetails
                        new KeyValuePair<string, string>("status", Estatus)
                 });
 
-                        var response = await client.PostAsync("https://gorest.co.in/public/v2/users/", parameters);
+                        var response = await client.PostAsync(apiurl1, parameters);
 
                         var responseString = await response.Content.ReadAsStringAsync();
                         MessageBox.Show(responseString);
                         var responseJson = JsonDocument.Parse(responseString).RootElement;
-                        var id = responseJson.GetProperty("id").GetInt32();
+                        int id = responseJson.GetProperty("id").GetInt32();
                         MessageBox.Show("Employee Added Successfully" + $"New ID: { id}");
-                                                                    
+                        //string id1 = responseJson.GetProperty("id").GetString();
+                        //MessageBox.Show($"ID:{id1 }");
+                        await GetNewlyCreatedID(id, "fa114107311259f5f33e70a5d85de34a2499b4401da069af0b1d835cd5ec0d56");
 
                     }
 
@@ -174,6 +180,29 @@ namespace EmployeeDetails
                 MessageBox.Show("Error occured"+ex.Message);
             }
         
+        }
+        
+       public static async Task<string> GetNewlyCreatedID(int id, string authToken)
+        {
+            using (var client = new HttpClient())
+            {
+        
+                string apiUrl = "https://gorest.co.in/public/v2/users/"+id;
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", authToken);
+
+                HttpResponseMessage response = await client.GetAsync(apiUrl);
+
+                if (response.IsSuccessStatusCode)
+                {
+                   
+                    string responseContent = await response.Content.ReadAsStringAsync();
+                    return responseContent;
+                }
+                else
+                {
+                    throw new Exception("API request failed with status code " + response.StatusCode.ToString());
+                }
+            }
         }
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
@@ -194,24 +223,16 @@ namespace EmployeeDetails
             DeleteEmployeeDetailsAsync();
         }
         public async Task DeleteEmployeeDetailsAsync()
-        {
+        {      
             try
             {
                 if (!String.IsNullOrEmpty(textBox1.Text))
-
-
                 {
                     HttpClient client = new HttpClient();
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "fa114107311259f5f33e70a5d85de34a2499b4401da069af0b1d835cd5ec0d56");
-                    string BaseUrl = "https://gorest.co.in/public/v2";
-                    string endpoint = "/users";
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiToken.Substring(7));
+                    
                     string param1 = textBox1.Text;
-                    string param2 = textBox2.Text;
-                    string param3 = comboBox1.Text;
-                    string param4 = textBox3.Text;
-                    string param5 = comboBox2.Text;
-                    string url = $"{BaseUrl}{endpoint}?id={param1}";
-
+                   
                     var response = await client.DeleteAsync($"https://gorest.co.in/public/v2/users/{param1}");
                     response.EnsureSuccessStatusCode();
 
@@ -221,14 +242,11 @@ namespace EmployeeDetails
                         MessageBox.Show("Deleted Successfuly");
 
                     }
-
                 }
                 else
                 {
                     MessageBox.Show("Enter the employee ID");
-                }
-
-                
+                }               
             }
             catch (Exception ex)
             {
@@ -237,7 +255,6 @@ namespace EmployeeDetails
             }
 
         }
-
 
         private void pictureBox5_Click(object sender, EventArgs e)
         {
