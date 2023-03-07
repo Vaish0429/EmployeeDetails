@@ -3,12 +3,14 @@ using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -17,6 +19,7 @@ namespace EmployeeDetails
 {
     public partial class Export : Form
     {
+        string apiToken = ConfigurationManager.AppSettings["ApiToken"];
         public Export()
         {
             InitializeComponent();
@@ -84,9 +87,9 @@ namespace EmployeeDetails
                     string endpoint = "/users/";
                     string param1 = id;
                     string url = $"{BaseUrl}{endpoint}?id={param1}";
-
+                    clint.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", apiToken);
                     HttpResponseMessage response = await clint.GetAsync(url);
-
+                    
                     string result = await response.Content.ReadAsStringAsync();
 
                     List<EmployeeInfo> data = JsonConvert.DeserializeObject<List<EmployeeInfo>>(result);
@@ -131,8 +134,8 @@ namespace EmployeeDetails
             string Estatus = comboBox2.Text;
 
             StringBuilder csvContent = new StringBuilder();
-            csvContent.Append(eid);
-            csvContent.Append("-");
+            csvContent.Append("Employee ID "+eid);
+            csvContent.Append("\n");
             csvContent.Append(Ename);
             csvContent.Append("\n");
             csvContent.Append(Email);
