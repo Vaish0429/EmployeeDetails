@@ -7,7 +7,9 @@ using System.Drawing;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Mail;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -71,90 +73,74 @@ namespace EmployeeDetails
 
         private void button1_Click(object sender, EventArgs e)
         {
-            //AddEmpDetailsAsync();
             
             AddAsync();
         }
 
-        public async Task AddEmpDetailsAsync()
+       
+            
+        public bool InputValidation()
         {
-            if (!String.IsNullOrEmpty(textBox1.Text))
+            errorProvider1.Clear();
+
+            bool isvalid = true;
+            if(String.IsNullOrEmpty(textBox2.Text))
             {
-
-                // string id = textBox1.Text.Trim();
-                string Ename = textBox2.Text.Trim();
-                string Eid = textBox1.Text.Trim();
-                string Email = textBox3.Text.Trim();
-                string Egender = comboBox1.Text;
-                string Estatus = comboBox2.Text;
-                //int Eid = Int32.Parse(id);
-                HttpClient clint = new HttpClient();
-                string BaseUrl = "https://gorest.co.in/public/v2/users";
-                clint.DefaultRequestHeaders.Accept.Clear();
-                clint.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "fa114107311259f5f33e70a5d85de34a2499b4401da069af0b1d835cd5ec0d56");
-
-                
-                var data = new { id = Eid, name = Ename, gender = Egender, status = Estatus };
-                var json = JsonConvert.SerializeObject(data);
-                var content = new StringContent(json, Encoding.UTF8, "application/json");
-                var response = await clint.PostAsync(BaseUrl, content);
-                var result = await response.Content.ReadAsStringAsync();
-                if (response.IsSuccessStatusCode)
-                {
-                   
-                    MessageBox.Show(result);
-                    MessageBox.Show("Added ");
-
-                }
-
-                else
-                {
-                    MessageBox.Show("error");
-                }
+                errorProvider1.SetError(textBox2, "Please enter employee name");
+                isvalid = false;
             }
-        }
-        public void InputValidation()
-        {
-            string Ename = textBox2.Text.Trim();
-
-            string Eid = textBox1.Text.Trim();
            
-            string Egender = comboBox1.Text;
-            string Estatus = comboBox2.Text;
-            if (Eid.Length<6)
+            if(comboBox1.SelectedIndex == -1)
             {
-                MessageBox.Show("Please enter the 6 digit employee id");
+                errorProvider1.SetError(comboBox1, "Please select gender");
+                isvalid = false;
             }
-            else if(Eid.Length>6)
+
+            if(comboBox2.SelectedIndex == -1)
             {
-                MessageBox.Show("Invalid ID");
+                errorProvider1.SetError(comboBox2, "Please select status");
+                isvalid = false;
             }
-            else
-            {
-                MessageBox.Show("Enter the employee id");
-            }
+            
             string Email = textBox3.Text.Trim();
-            if(!(Email.LastIndexOf("@")>-1))
+           ;
+            if (String.IsNullOrEmpty(textBox3.Text))
             {
-                MessageBox.Show("Invalid Email Address");
+                errorProvider1.SetError(textBox3, "Please enter  email address");
+                isvalid = false;
             }
+            else if (!Regex.IsMatch(Email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$"))
+            {
+                errorProvider1.SetError(textBox3, "Please enter valid email address");
+                isvalid = false;
+
+            }
+           
+           
+            if (errorProvider1.GetError(textBox2)!="" || errorProvider1.GetError(textBox3) != "" || errorProvider1.GetError(comboBox1) != "" || errorProvider1.GetError(comboBox2) != "")
+            {
+                MessageBox.Show("Please fill all the inputs");
+                isvalid = false;
+
+            }
+            return isvalid;
         }
+       
         public async Task AddAsync()
         {
+            //InputValidation();
             try
             {
-
-                if (!String.IsNullOrEmpty(textBox1.Text) && !String.IsNullOrEmpty(textBox2.Text) && !String.IsNullOrEmpty(textBox3.Text) &&
-                    comboBox1.SelectedIndex != -1 && comboBox2.SelectedIndex != -1)
+                if (InputValidation())
                 {
-
                     string Ename = textBox2.Text.Trim();
 
                     string Eid = textBox1.Text.Trim();
                     string Email = textBox3.Text.Trim();
                     string Egender = comboBox1.Text;
                     string Estatus = comboBox2.Text;
-
+                    
+                    
                     using (var client = new HttpClient())
                     {
                         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", "fa114107311259f5f33e70a5d85de34a2499b4401da069af0b1d835cd5ec0d56");
@@ -164,7 +150,7 @@ namespace EmployeeDetails
                     new KeyValuePair<string, string>("name", Ename),
                     new KeyValuePair<string, string>("email", Email),
                      new KeyValuePair<string, string>("gender", Egender),
-
+                     
                        new KeyValuePair<string, string>("status", Estatus)
                 });
 
@@ -172,14 +158,16 @@ namespace EmployeeDetails
 
                         var responseString = await response.Content.ReadAsStringAsync();
                         MessageBox.Show(responseString);
+                        var responseJson = JsonDocument.Parse(responseString).RootElement;
+                        var id = responseJson.GetProperty("id").GetInt32();
+                        MessageBox.Show("Employee Added Successfully" + $"New ID: { id}");
+                                                                    
 
-                        MessageBox.Show("Employee Added Successfully");
                     }
+
                 }
-                else
-                {
-                    MessageBox.Show("Enter the employee details");  
-                }
+               
+                
             }
             catch (Exception ex)
             {
@@ -189,10 +177,15 @@ namespace EmployeeDetails
         }
         private void textBox1_TextChanged(object sender, EventArgs e)
         {
+            
+        }
+        private void textBox1_Leave(object sender,EventArgs e)
+        {
             if (String.IsNullOrEmpty(textBox1.Text))
             {
-                MessageBox.Show("Please enter employee id");
+                //MessageBox.Show("Please enter employee id");
                 textBox1.Focus();
+                //errorProvider1.SetError(this.textBox1, "Please enter employee id");
             }
         }
 
@@ -230,11 +223,17 @@ namespace EmployeeDetails
                     }
 
                 }
+                else
+                {
+                    MessageBox.Show("Enter the employee ID");
+                }
+
+                
             }
             catch (Exception ex)
             {
                 MessageBox.Show(ex.Message);
-                MessageBox.Show("Enter employee ID");
+                //MessageBox.Show("Enter employee ID");
             }
 
         }
@@ -251,21 +250,45 @@ namespace EmployeeDetails
 
         private void textBox3_TextChanged(object sender, EventArgs e)
         {
-            string email = textBox3.Text;
-            //bool isValid = Regex.IsMatch(email, @"^[^@\s]+@[^@\s]+\.[^@\s]+$");
-            if (!String.IsNullOrEmpty(email))
-            {
-                MessageBox.Show("enter valid email address");
-            }
-            
-        }
 
+        }
+        private void textBox3_Leave(object sender,EventArgs e)
+        {
+
+            if (!string.IsNullOrWhiteSpace(textBox3.Text))
+            {
+                Regex reg = new Regex(@"\w+([-+.]\w+)*@\w+([-.]\w+)*\.\w+([-.]\w+)*");
+                if (!reg.IsMatch(textBox3.Text))
+                {
+                    MessageBox.Show("Invalid Email ID");
+                    textBox3.Focus();
+                    //errorProvider3.SetError(this.textBox3, "Please enter employee id");
+
+                }
+            }
+        }
         private void textBox2_TextChanged(object sender, EventArgs e)
         {
             if(String.IsNullOrEmpty(textBox2.Text))
             {
-                MessageBox.Show("Please enter employee name");
+                //MessageBox.Show("Please enter employee name");
+                
             }
+        }
+        private void textBox2_Leave(object sender,EventArgs e)
+        {
+            if (String.IsNullOrEmpty(textBox2.Text))
+            {
+                //MessageBox.Show("Please enter employee id");
+                
+                textBox2.Focus();
+                //errorProvider2.SetError(this.textBox2, "Please enter employee name");
+            }
+        }
+
+        private void Employee_Load(object sender, EventArgs e)
+        {
+
         }
     }
 }

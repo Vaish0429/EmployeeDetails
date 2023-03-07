@@ -6,6 +6,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Printing;
+using System.IO;
 using System.Linq;
 using System.Net.Http;
 using System.Text;
@@ -86,7 +87,7 @@ namespace EmployeeDetails
 
                     HttpResponseMessage response = await clint.GetAsync(url);
 
-                    string result = await response.Content.ReadAsStringAsync();                   
+                    string result = await response.Content.ReadAsStringAsync();
 
                     List<EmployeeInfo> data = JsonConvert.DeserializeObject<List<EmployeeInfo>>(result);
                     textBox2.Text = data[0].name;
@@ -95,7 +96,7 @@ namespace EmployeeDetails
                     comboBox1.Text = data[0].gender;
                     comboBox2.DataSource = data;
                     comboBox2.Text = data[0].status;
-                  
+
                 }
                 else
                 {
@@ -105,9 +106,9 @@ namespace EmployeeDetails
             catch (Exception ex)
             {
                 MessageBox.Show("Enter valid Employee ID");
-                //MessageBox.Show(ex.Message);
+                MessageBox.Show(ex.Message);
             }
-        
+
         }
 
         private void pictureBox5_Click(object sender, EventArgs e)
@@ -117,10 +118,48 @@ namespace EmployeeDetails
 
         private void button2_Click(object sender, EventArgs e)
         {
-            printDocument1.Print();
+            //printDocument1.Print();
+            ExportEmployee();
         }
 
-        private void printDocument1_PrintPage_1(object sender, PrintPageEventArgs e)
+        public void ExportEmployee()
+        {
+            string eid = textBox1.Text.Trim();
+            string Ename = textBox2.Text.Trim();
+            string Email = textBox3.Text.Trim();
+            string Egender = comboBox1.Text;
+            string Estatus = comboBox2.Text;
+
+            StringBuilder csvContent = new StringBuilder();
+            csvContent.Append(eid);
+            csvContent.Append("-");
+            csvContent.Append(Ename);
+            csvContent.Append("\n");
+            csvContent.Append(Email);
+            csvContent.Append("\n");
+            csvContent.Append(Egender);
+            csvContent.Append("\n");
+            csvContent.Append(Estatus);
+            csvContent.Append("\n");
+            //csvContent.Append("\n");
+
+
+            SaveFileDialog saveFileDialog = new SaveFileDialog();
+            saveFileDialog.Filter = "CSV files (*.csv)|*.csv";
+            if (saveFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                string fileName = saveFileDialog.FileName;
+                File.WriteAllText(fileName, csvContent.ToString());
+            }
+        }
+
+    
+
+
+
+
+        
+    private void printDocument1_PrintPage_1(object sender, PrintPageEventArgs e)
         {
            
             Bitmap bitmap = new Bitmap(this.Width, this.Height);
@@ -128,6 +167,7 @@ namespace EmployeeDetails
 
             // Draw the Bitmap on the printed page
             e.Graphics.DrawImage(bitmap, e.PageBounds);
+            
         }
        
         private void textBox1_TextChanged(object sender, EventArgs e)

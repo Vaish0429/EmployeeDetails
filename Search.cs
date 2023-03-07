@@ -106,6 +106,24 @@ namespace EmployeeDetails
             home.Show();
             this.Hide();
         }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            GetAllAsync();
+        }
+        public async Task GetAllAsync()
+        {
+            string BaseUrl = "https://gorest.co.in/public/v2/";
+            string endpoint = "/users/";
+            string url = $"{ BaseUrl}{ endpoint}";
+            HttpClient clint = new HttpClient();
+            HttpResponseMessage response = await clint.GetAsync(url);
+
+
+            string result = await response.Content.ReadAsStringAsync();
+            DataTable dataTable = JsonConvert.DeserializeObject<DataTable>(result);
+            dataGridView1.DataSource = dataTable;
+        }
     }
 }
 
